@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Client — Éco-Gestion</title>
+<style>
+  :root{
+    --ink:#0F1129;
+    --panel:#191C42;
+    --panel-2:#20244F;
+    --gold:#FFC93C;
+    --gold-dark:#E0A800;
+    --mint:#2EE6A6;
+    --pink:#FF3D71;
+    --ice:#7DD8FF;
+    --text:#F4F1FF;
+    --text-dim:#A9ACD6;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:radial-gradient(circle at 15% 10%, #23285c 0%, var(--ink) 55%);
+    color:var(--text);
+    font-family:-apple-system,"Segoe UI",Verdana,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  .headline{
+    font-family:"Arial Black","Segoe UI Black",Verdana,sans-serif;
+    letter-spacing:-0.02em;
+  }
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:none;
+  }
+  input[type=text]{
+    font-family:inherit;
+  }
+  ::selection{background:var(--gold);color:var(--ink);}
+
+  /* ---------- top bar ---------- */
+  #topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 26px;
+    background:rgba(0,0,0,0.18);
+    border-bottom:2px solid rgba(255,255,255,0.06);
+  }
+  #topbar .brand{display:flex;align-items:center;gap:12px;}
+  #topbar .brand .ball{
+    width:34px;height:34px;border-radius:50%;
+    background:conic-gradient(from 220deg, var(--gold), var(--pink), var(--ice), var(--gold));
+    box-shadow:0 0 0 3px rgba(255,255,255,0.08);
+    flex-shrink:0;
+  }
+  #topbar .brand h1{
+    margin:0;
+    font-size:20px;
+    line-height:1.1;
+  }
+  #topbar .brand small{
+    display:block;
+    color:var(--text-dim);
+    font-weight:400;
+    font-size:12px;
+  }
+  #topbar .tools{display:flex;gap:8px;align-items:center;}
+  .icon-btn{
+    background:var(--panel-2);
+    color:var(--text);
+    width:38px;height:38px;
+    border-radius:10px;
+    font-size:17px;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .icon-btn:hover{background:#2b2f66;transform:translateY(-1px);}
+  .pill-btn{
+    background:var(--panel-2);
+    color:var(--text);
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .pill-btn:hover{background:#2b2f66;transform:translateY(-1px);}
+
+  /* ---------- generic screens ---------- */
+  .screen{flex:1;display:none;padding:26px;}
+  .screen.active{display:flex;flex-direction:column;}
+
+  /* ===================== SETUP SCREEN ===================== */
+  #setup{gap:22px;max-width:1080px;margin:0 auto;width:100%;}
+  #setup .lede{max-width:640px;}
+  #setup .lede h2{font-size:26px;margin:0 0 6px;}
+  #setup .lede p{color:var(--text-dim);margin:0;line-height:1.5;font-size:14.5px;}
+  .setup-grid{
+    display:grid;
+    grid-template-columns:1.15fr 0.85fr;
+    gap:20px;
+  }
+  @media (max-width:820px){.setup-grid{grid-template-columns:1fr;}}
+  .card-box{
+    background:var(--panel);
+    border-radius:18px;
+    padding:22px;
+    border:1px solid rgba(255,255,255,0.06);
+  }
+  .card-box h3{margin:0 0 14px;font-size:16px;display:flex;align-items:center;gap:8px;}
+  .pair-form{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .pair-form input{
+    flex:1;min-width:120px;
+    background:var(--ink);
+    border:1px solid rgba(255,255,255,0.12);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:10px;
+    font-size:14px;
+  }
+  .pair-form input:focus{outline:2px solid var(--gold);}
+  .add-btn{
+    background:var(--gold);
+    color:var(--ink);
+    font-weight:700;
+    padding:10px 16px;
+    border-radius:10px;
+    font-size:14px;
+  }
+  .add-btn:hover{background:#ffd766;}
+  #pairList{display:flex;flex-direction:column;gap:8px;max-height:290px;overflow:auto;}
+  .pair-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel-2);
+    padding:9px 12px;
+    border-radius:10px;
+    font-size:14px;
+  }
+  .pair-row .names{font-weight:600;}
+  .pair-row .del{
+    background:transparent;color:var(--pink);font-size:17px;font-weight:700;padding:2px 8px;border-radius:8px;
+  }
+  .pair-row .del:hover{background:rgba(255,61,113,0.15);}
+  .empty-note{color:var(--text-dim);font-size:13px;font-style:italic;}
+
+  .theme-list{display:flex;flex-direction:column;gap:10px;}
+  .theme-opt{
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel-2);
+    padding:12px 14px;
+    border-radius:12px;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+    border:2px solid transparent;
+  }
+  .theme-opt.checked{border-color:var(--gold);}
+  .theme-opt input{width:18px;height:18px;accent-color:var(--gold);}
+  .theme-opt .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+  .start-wrap{
+    display:flex;justify-content:center;margin-top:6px;
+  }
+  #startBtn{
+    background:linear-gradient(180deg, #ffd766, var(--gold));
+    color:var(--ink);
+    font-weight:800;
+    font-size:18px;
+    padding:16px 46px;
+    border-radius:999px;
+    box-shadow:0 6px 0 var(--gold-dark);
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  #startBtn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--gold-dark);}
+  #startBtn:disabled{opacity:0.4;cursor:not-allowed;}
+  #setupMsg{text-align:center;color:var(--pink);font-size:13px;height:18px;margin-top:8px;font-weight:600;}
+
+  /* ===================== GAME SCREEN ===================== */
+  #game{gap:16px;}
+  #scoreboard{
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+    padding:6px 0 4px;
+  }
+  .team-chip{
+    background:var(--panel);
+    border:2px solid rgba(255,255,255,0.08);
+    padding:10px 16px;
+    border-radius:999px;
+    display:flex;align-items:center;gap:10px;
+    font-size:14px;
+    transition:transform .12s ease, border-color .12s ease;
+  }
+  .team-chip.pickable{cursor:pointer;}
+  .team-chip.pickable:hover{transform:translateY(-2px);border-color:var(--ice);}
+  .team-chip.active{border-color:var(--gold);background:#26295c;}
+  .team-chip .tscore{
+    font-family:"Courier New",monospace;
+    font-weight:700;
+    background:var(--ink);
+    padding:3px 9px;
+    border-radius:8px;
+    font-size:13px;
+  }
+  .team-chip .streak{
+    color:var(--gold);font-weight:700;font-size:12.5px;
+  }
+
+  #stage{
+    flex:1;
+    background:var(--panel);
+    border-radius:24px;
+    border:1px solid rgba(255,255,255,0.06);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:34px;
+    position:relative;
+    overflow:hidden;
+    min-height:360px;
+  }
+  #stage.flash-win{animation:flashWin .6s ease;}
+  #stage.flash-lose{animation:flashLose .6s ease;}
+  @keyframes flashWin{0%{background:var(--mint);}100%{background:var(--panel);}}
+  @keyframes flashLose{0%{background:var(--pink);}100%{background:var(--panel);}}
+
+  .stage-hint{color:var(--text-dim);font-size:16px;max-width:480px;}
+  .stage-hint b{color:var(--text);}
+
+  #callTeamName{font-size:30px;margin:0 0 14px;}
+  #drawBtn{
+    background:var(--ice);color:var(--ink);font-weight:800;font-size:16px;
+    padding:14px 30px;border-radius:999px;box-shadow:0 5px 0 #3fa8d6;
+  }
+  #drawBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #3fa8d6;}
+
+  .theme-tag{
+    display:inline-block;
+    padding:5px 14px;
+    border-radius:999px;
+    font-size:12.5px;
+    font-weight:700;
+    margin-bottom:16px;
+  }
+  #cardText{
+    font-size:clamp(22px,3.4vw,40px);
+    font-weight:800;
+    max-width:820px;
+    line-height:1.28;
+    margin:0 0 26px;
+  }
+
+  #timerWrap{width:100%;max-width:520px;margin:0 auto;}
+  #timerBar{
+    height:16px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;
+  }
+  #timerFill{height:100%;width:100%;background:linear-gradient(90deg,var(--mint),var(--gold));transition:width 1s linear;}
+  #timerNum{font-family:"Courier New",monospace;font-size:15px;margin-top:8px;color:var(--text-dim);}
+
+  #countdownNum{
+    font-size:clamp(70px,14vw,150px);
+    font-weight:900;
+    font-family:"Arial Black",sans-serif;
+    color:var(--gold);
+  }
+  #countdownWord{
+    font-size:clamp(30px,6vw,58px);
+    font-weight:900;
+    color:var(--mint);
+  }
+
+  .judge-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+  .judge-btn{
+    padding:16px 26px;border-radius:16px;font-weight:800;font-size:16px;
+    box-shadow:0 5px 0 rgba(0,0,0,0.35);
+  }
+  .judge-btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,0.35);}
+  .judge-btn.win{background:var(--mint);color:#04321f;}
+  .judge-btn.lose{background:var(--pink);color:#3a0011;}
+  .hint-toggle{
+    margin-top:14px;background:transparent;color:var(--text-dim);font-size:13px;text-decoration:underline;
+  }
+  #hintBox{
+    margin-top:10px;font-size:14px;color:var(--gold);display:none;font-weight:600;
+  }
+
+  #decisionBox h2{margin:0 0 4px;font-size:24px;}
+  #decisionBox p{color:var(--text-dim);margin:0 0 20px;}
+  .decision-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+  .decision-btn{padding:16px 26px;border-radius:16px;font-weight:800;font-size:15px;box-shadow:0 5px 0 rgba(0,0,0,0.35);}
+  .decision-btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,0.35);}
+  .bank-btn{background:var(--gold);color:var(--ink);}
+  .retry-btn{background:var(--panel-2);color:var(--text);border:2px solid var(--gold);}
+
+  #gameFooter{
+    display:flex;justify-content:center;gap:10px;margin-top:4px;
+  }
+
+  /* ===================== RESULTS SCREEN ===================== */
+  #results{align-items:center;justify-content:center;gap:18px;text-align:center;}
+  #results h2{font-size:30px;margin:0;}
+  #rankList{display:flex;flex-direction:column;gap:10px;width:100%;max-width:480px;}
+  .rank-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel);padding:14px 20px;border-radius:14px;font-size:16px;font-weight:700;
+  }
+  .rank-row.first{border:2px solid var(--gold);background:#26295c;}
+  .rank-row .pos{color:var(--text-dim);font-weight:400;margin-right:8px;}
+  .rank-row .pts{font-family:"Courier New",monospace;color:var(--gold);}
+
+  footer.credit{
+    text-align:center;color:var(--text-dim);font-size:12px;padding:14px;
+  }
+
+  /* confetti */
+  .confetti{
+    position:fixed;top:-10px;width:9px;height:14px;z-index:999;pointer-events:none;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{to{transform:translateY(105vh) rotate(600deg);opacity:0.9;}}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand">
+    <div class="ball"></div>
+    <div>
+      <h1 class="headline">Client Client <span style="color:var(--gold)">— Éco-Gestion</span></h1>
+      <small id="teacherLine">Mme LEGER Isabelle, enseignante éco-gestion</small>
+    </div>
+  </div>
+  <div class="tools">
+    <span class="pill-btn" id="gameClock" style="display:none;background:var(--panel-2);">⏱ --:--</span>
+    <button class="icon-btn" id="muteBtn" title="Couper / activer le son">🔊</button>
+    <button class="icon-btn" id="fsBtn" title="Plein écran">⛶</button>
+    <button class="pill-btn" id="rulesBtn">📜 Règles</button>
+  </div>
+</div>
+
+<!-- ===================== SETUP ===================== -->
+<section class="screen active" id="setup">
+  <div class="lede">
+    <h2>On installe la partie</h2>
+    <p>Formez vos binômes et choisissez les thèmes à réviser. Chaque binôme devra donner, à voix haute et en même temps, <b>le même mot — et le bon mot</b> — pour marquer le point : les deux élèves doivent tomber sur la notion attendue, sans se concerter.</p>
+  </div>
+
+  <div class="setup-grid">
+    <div class="card-box">
+      <h3>👥 Les binômes</h3>
+      <div class="pair-form">
+        <input type="text" id="p1" placeholder="Prénom élève 1">
+        <input type="text" id="p2" placeholder="Prénom élève 2">
+        <button class="add-btn" id="addPairBtn">+ Ajouter</button>
+      </div>
+      <div id="pairList"><p class="empty-note">Aucun binôme ajouté pour l'instant.</p></div>
+    </div>
+
+    <div class="card-box">
+      <h3>🎯 Les thèmes</h3>
+      <div class="theme-list" id="themeList"></div>
+    </div>
+  </div>
+
+  <div class="card-box" style="max-width:480px;margin:0 auto;width:100%;">
+    <h3>🎓 Niveau</h3>
+    <div class="theme-list" id="levelList"></div>
+    <p style="color:var(--text-dim);font-size:12px;margin:10px 0 0;">Répartition indicative selon le périmètre des référentiels (CAP Équipier Polyvalent du Commerce / Bac Pro Métiers du Commerce et de la Vente) — à ajuster selon votre classe.</p>
+  </div>
+
+  <div class="card-box" style="max-width:360px;margin:0 auto;width:100%;">
+    <h3>⏱ Durée de la partie</h3>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="number" id="durationInput" min="0" step="1" value="20"
+        style="width:90px;background:var(--ink);border:1px solid rgba(255,255,255,0.12);color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px;">
+      <span style="color:var(--text-dim);font-size:14px;">minutes (0 = durée libre, vous terminez quand vous voulez)</span>
+    </div>
+  </div>
+
+  <div class="start-wrap">
+    <button id="startBtn">🚀 Lancer la partie</button>
+  </div>
+  <div id="setupMsg"></div>
+</section>
+
+<!-- ===================== GAME ===================== -->
+<section class="screen" id="game">
+  <div id="scoreboard"></div>
+
+  <div id="stage">
+    <!-- state: idle (no team) -->
+    <div id="stateIdle" class="stage-hint">
+      👉 Cliquez sur un binôme dans le tableau des scores pour le désigner — il reste à sa place, la question s'affiche au hasard.
+    </div>
+
+    <!-- state: team called, waiting draw -->
+    <div id="stateCalled" style="display:none;">
+      <p class="stage-hint">C'est à vous :</p>
+      <h2 id="callTeamName" class="headline"></h2>
+      <button id="drawBtn">🎴 Piocher une carte</button>
+    </div>
+
+    <!-- state: card shown, prep timer -->
+    <div id="statePrep" style="display:none;width:100%;">
+      <span class="theme-tag" id="prepThemeTag"></span>
+      <p id="cardText"></p>
+      <div id="timerWrap">
+        <div id="timerBar"><div id="timerFill"></div></div>
+        <div id="timerNum">15 s pour réfléchir chacun de son côté — pas le droit de parler !</div>
+      </div>
+    </div>
+
+    <!-- state: countdown 3-2-1 -->
+    <div id="stateCountdown" style="display:none;">
+      <div id="countdownNum">3</div>
+      <div id="countdownWord" style="display:none;">PARLEZ !</div>
+    </div>
+
+    <!-- state: judge -->
+    <div id="stateJudge" style="display:none;width:100%;">
+      <span class="theme-tag" id="judgeThemeTag"></span>
+      <p id="judgeCardText" style="font-size:20px;font-weight:700;color:var(--text-dim);margin:0 0 18px;"></p>
+      <p class="stage-hint" style="margin-bottom:10px;"><b>Ont-ils dit le même mot, et est-ce le bon mot attendu ?</b></p>
+      <div class="judge-row">
+        <button class="judge-btn win" id="winBtn">✅ Même mot & mot juste</button>
+        <button class="judge-btn lose" id="loseBtn">❌ Différent ou faux</button>
+      </div>
+      <button class="hint-toggle" id="hintToggle">🔎 Afficher l'indice (réponse attendue)</button>
+      <div id="hintBox"></div>
+    </div>
+
+    <!-- state: decision after win -->
+    <div id="stateDecision" style="display:none;">
+      <div id="decisionBox">
+        <h2 id="decisionTitle">🎉 Point marqué !</h2>
+        <p id="decisionSub"></p>
+        <div class="decision-row">
+          <button class="decision-btn bank-btn" id="bankBtn"></button>
+          <button class="decision-btn retry-btn" id="retryBtn">🔥 Retenter (tout risquer)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- state: after loss -->
+    <div id="stateLossMsg" style="display:none;">
+      <h2 style="margin:0 0 8px;">😬 Dommage !</h2>
+      <p id="lossText" class="stage-hint" style="margin-bottom:20px;"></p>
+      <button class="pill-btn" id="continueAfterLoss">Continuer ➜</button>
+    </div>
+  </div>
+
+  <div id="gameFooter">
+    <button class="pill-btn" id="endGameBtn">🏁 Terminer la partie</button>
+  </div>
+</section>
+
+<!-- ===================== RESULTS ===================== -->
+<section class="screen" id="results">
+  <h2>🏆 Résultats de la partie</h2>
+  <div id="rankList"></div>
+  <div style="display:flex;gap:12px;">
+    <button class="pill-btn" id="resumeBtn">⬅ Reprendre la partie</button>
+    <button id="startBtn2" class="pill-btn" style="background:var(--gold);color:var(--ink);">🔁 Nouvelle partie</button>
+  </div>
+</section>
+
+<footer class="credit">Jeu créé par LEGER Isabelle, enseignante éco-gestion — usage pédagogique en classe</footer>
+
+<!-- ===================== RULES MODAL ===================== -->
+<div id="rulesModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--panel);border-radius:18px;padding:28px;max-width:520px;">
+    <h2 style="margin-top:0;">📜 Règles du jeu</h2>
+    <ol style="line-height:1.7;font-size:14.5px;color:var(--text);padding-left:20px;">
+      <li>Un binôme est désigné et une carte-question apparaît au hasard : les deux élèves <b>restent à leur place</b>, aucun déplacement n'est nécessaire.</li>
+      <li>Chacun réfléchit <b>15 secondes, seul, sans en parler à son partenaire</b>.</li>
+      <li>Au signal <b>3, 2, 1... PARLEZ !</b>, les deux élèves disent leur réponse à voix haute, en même temps.</li>
+      <li>Le point n'est marqué que si c'est <b>le même mot ET le bon mot</b> (celui attendu pour la notion) : le binôme peut alors retenter sa chance pour cumuler d'autres points.</li>
+      <li>S'ils retentent et se trompent, ils <b>perdent tous les points gagnés</b> pendant cette série. S'ils préfèrent s'arrêter, les points sont définitivement gagnés.</li>
+    </ol>
+    <div style="text-align:right;"><button class="pill-btn" id="closeRules">Fermer</button></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DONNÉES : cartes de révision Éco-Gestion
+========================================================= */
+const THEMES = [
+  {id:'vente',   label:'Vente',       color:'#FF3D71'},
+  {id:'accueil', label:'Accueil',     color:'#2EE6A6'},
+  {id:'commerce',label:'Commerce',    color:'#7DD8FF'},
+  {id:'gestion', label:'Éco-Gestion', color:'#FFC93C'},
+];
+const LEVELS = [
+  {id:'cap', label:'CAP',     color:'#FFC93C'},
+  {id:'pro', label:'Bac Pro', color:'#FF3D71'},
+];
+
+/* Niveau des cartes : "cap" (CAP Équipier Polyvalent du Commerce — accueil de base,
+   réception/suivi des commandes, mise en valeur) ou "pro" (Bac Pro Métiers du Commerce
+   et de la Vente — techniques de vente, mercatique, fidélisation, prospection, gestion).
+   Répartition indicative construite à partir du périmètre général des référentiels :
+   à ajuster librement selon votre progression. */
+const CARDS = [
+  // ---- VENTE ----
+  {theme:'vente', level:'cap', text:"Document remis au client qui prouve son achat", hint:"le ticket de caisse"},
+  {theme:'vente', level:'pro', text:"Réduction accordée pour un paiement immédiat", hint:"l'escompte"},
+  {theme:'vente', level:'pro', text:"Vendre un produit complémentaire en plus de l'achat principal", hint:"la vente additionnelle"},
+  {theme:'vente', level:'pro', text:"Différence entre le prix de vente et le prix d'achat", hint:"la marge"},
+  {theme:'vente', level:'cap', text:"Personne qui achète un produit ou un service", hint:"le client"},
+  {theme:'vente', level:'cap', text:"Personne qui vend un produit ou un service", hint:"le vendeur"},
+  {theme:'vente', level:'pro', text:"Étape de la vente où l'on découvre ce que veut le client", hint:"la découverte des besoins"},
+  {theme:'vente', level:'pro', text:"Réponse du vendeur face à une hésitation du client", hint:"l'argumentation / le traitement de l'objection"},
+  {theme:'vente', level:'pro', text:"Dernière étape de la vente qui aboutit à l'achat", hint:"la conclusion (le closing)"},
+  {theme:'vente', level:'cap', text:"Prix réduit pendant une période limitée", hint:"la promotion"},
+  {theme:'vente', level:'cap', text:"Situation où un produit n'est plus disponible en magasin", hint:"la rupture de stock"},
+  {theme:'vente', level:'cap', text:"Petit code sur l'emballage qui donne le prix en caisse", hint:"le code-barres"},
+  {theme:'vente', level:'cap', text:"Réduction accordée pour une grande quantité achetée", hint:"la remise"},
+  {theme:'vente', level:'pro', text:"Somme totale des ventes réalisées par une entreprise", hint:"le chiffre d'affaires"},
+  {theme:'vente', level:'cap', text:"Service qui aide le client après qu'il a acheté un produit", hint:"le service après-vente (SAV)"},
+  {theme:'vente', level:'pro', text:"Méthode utilisée pour mener un appel téléphonique commercial : Contact, Raison, Objectif, Congé", hint:"la méthode CROC"},
+  {theme:'vente', level:'pro', text:"Technique qui classe en 6 lettres les motivations d'achat d'un client", hint:"le SONCAS"},
+  {theme:'vente', level:'pro', text:"Dans le SONCAS, motivation d'achat liée à la peur de se tromper, au besoin d'être rassuré", hint:"la sécurité"},
+  {theme:'vente', level:'pro', text:"Dans le SONCAS, motivation d'achat liée au besoin de se distinguer, de briller", hint:"l'orgueil"},
+  {theme:'vente', level:'pro', text:"Dans le SONCAS, motivation d'achat liée à l'attrait pour la dernière tendance", hint:"la nouveauté"},
+  {theme:'vente', level:'pro', text:"Dans le SONCAS, motivation d'achat liée au bien-être et à la facilité d'utilisation", hint:"le confort"},
+  {theme:'vente', level:'pro', text:"Dans le SONCAS, motivation d'achat liée au prix et à la recherche de la meilleure affaire", hint:"l'argent"},
+  {theme:'vente', level:'pro', text:"Dans le SONCAS, motivation d'achat liée à l'envie de faire plaisir à quelqu'un", hint:"la sympathie"},
+  {theme:'vente', level:'cap', text:"Action de vérifier que la commande du client a bien été reçue, préparée puis livrée", hint:"le suivi de la commande"},
+  {theme:'vente', level:'pro', text:"Ensemble des prestations proposées en plus du produit : livraison, installation, garantie...", hint:"les services associés"},
+  {theme:'vente', level:'pro', text:"Vente réalisée sans que le client soit physiquement présent dans le magasin (téléphone, internet, catalogue)", hint:"la vente à distance"},
+  {theme:'vente', level:'pro', text:"Ensemble des actions menées par l'entreprise pour donner envie au client de revenir", hint:"la fidélisation"},
+  {theme:'vente', level:'cap', text:"Document qui accompagne la marchandise au moment de la livraison", hint:"le bon de livraison"},
+  {theme:'vente', level:'pro', text:"Garantie commerciale proposée en plus de la garantie légale", hint:"l'extension de garantie"},
+  {theme:'vente', level:'cap', text:"Poste où l'on encaisse le client à la fin de son parcours d'achat", hint:"la caisse"},
+
+  // ---- ACCUEIL ----
+  {theme:'accueil', level:'cap', text:"Premier mot que l'on dit à un client qui entre", hint:"bonjour"},
+  {theme:'accueil', level:'cap', text:"Expression du visage qui met le client à l'aise", hint:"le sourire"},
+  {theme:'accueil', level:'cap', text:"Capacité à être présent et à répondre vite au client", hint:"la disponibilité"},
+  {theme:'accueil', level:'cap', text:"Fait d'écouter vraiment ce que dit le client", hint:"l'écoute active"},
+  {theme:'accueil', level:'cap', text:"Dernier mot que l'on dit à un client qui part", hint:"au revoir"},
+  {theme:'accueil', level:'cap', text:"Mot que l'on dit pour remercier le client", hint:"merci"},
+  {theme:'accueil', level:'cap', text:"Attitude respectueuse envers le client", hint:"la politesse"},
+  {theme:'accueil', level:'cap', text:"Règle d'or de l'accueil : Sourire, Bonjour, Au revoir, Merci", hint:"le SBAM"},
+  {theme:'accueil', level:'cap', text:"Façon de se tenir devant un client (dos droit, tenue soignée)", hint:"la posture"},
+  {theme:'accueil', level:'cap', text:"Fait de guider le client vers le bon rayon ou service", hint:"l'orientation"},
+  {theme:'accueil', level:'cap', text:"Redire la demande du client pour être sûr d'avoir compris", hint:"la reformulation"},
+  {theme:'accueil', level:'cap', text:"Sentiment du client quand l'accueil lui a plu", hint:"la satisfaction"},
+  {theme:'accueil', level:'cap', text:"Accueil que l'on fait par téléphone", hint:"l'accueil téléphonique"},
+  {theme:'accueil', level:'cap', text:"Qualité qui permet de comprendre ce que ressent le client", hint:"l'empathie"},
+  {theme:'accueil', level:'cap', text:"Vêtement porté pour représenter l'entreprise", hint:"la tenue professionnelle"},
+  {theme:'accueil', level:'pro', text:"Règle des 20 premières secondes, 20 premiers mots, 20 premiers gestes et 20 cm du visage", hint:"la règle des 4x20"},
+  {theme:'accueil', level:'pro', text:"Document interne qui fixe les règles et les engagements d'accueil d'une enseigne", hint:"la charte d'accueil"},
+  {theme:'accueil', level:'cap', text:"Mécontentement exprimé par un client suite à un problème rencontré", hint:"la réclamation"},
+  {theme:'accueil', level:'cap', text:"Attitude à adopter en priorité face à un client qui réclame", hint:"le calme (rester calme et écouter)"},
+  {theme:'accueil', level:'pro', text:"Geste ou solution proposée pour compenser un problème rencontré par le client", hint:"le geste commercial"},
+  {theme:'accueil', level:'pro', text:"Fait de bien traiter une réclamation pour transformer un client mécontent en client fidèle", hint:"le traitement de la réclamation"},
+  {theme:'accueil', level:'cap', text:"Premier contact visuel et sonore avec un client qui entre dans le magasin", hint:"l'accueil physique"},
+  {theme:'accueil', level:'pro', text:"Suivi du client sur plusieurs canaux (magasin, téléphone, internet, réseaux sociaux) avec la même qualité de service", hint:"la relation client omnicanale"},
+  {theme:'accueil', level:'cap', text:"Qualité qui consiste à être aimable et prévenant avec le client", hint:"la courtoisie"},
+  {theme:'accueil', level:'cap', text:"Fait de faire patienter un client sans le laisser seul ni l'ignorer", hint:"la gestion de l'attente"},
+  {theme:'accueil', level:'pro', text:"Technique qui consiste à poser des questions au client pour cerner sa demande", hint:"le questionnement"},
+  {theme:'accueil', level:'cap', text:"Langage soigné à utiliser avec un client, sans familiarité ni tutoiement", hint:"le vocabulaire professionnel"},
+  {theme:'accueil', level:'pro', text:"Étape finale de l'échange où l'on prend congé du client poliment", hint:"la prise de congé"},
+  {theme:'accueil', level:'cap', text:"Qualité qui consiste à respecter les horaires d'ouverture et les rendez-vous", hint:"la ponctualité"},
+  {theme:'accueil', level:'pro', text:"Ce que renvoie un bon accueil sur la réputation de l'entreprise", hint:"l'image de l'entreprise"},
+
+  // ---- COMMERCE ----
+  {theme:'commerce', level:'cap', text:"Nom qui identifie une enseigne commerciale", hint:"la marque"},
+  {theme:'commerce', level:'pro', text:"Magasin qui appartient à un réseau sous licence", hint:"la franchise"},
+  {theme:'commerce', level:'cap', text:"Entreprise qui fournit les produits au magasin", hint:"le fournisseur"},
+  {theme:'commerce', level:'cap', text:"Meuble sur lequel sont exposés les produits en magasin", hint:"le rayon / le linéaire"},
+  {theme:'commerce', level:'cap', text:"Grande surface qui vend de tout, alimentaire et non-alimentaire", hint:"l'hypermarché"},
+  {theme:'commerce', level:'cap', text:"Vente de produits uniquement sur Internet", hint:"le e-commerce"},
+  {theme:'commerce', level:'pro', text:"Zone autour d'un magasin où habitent ses clients potentiels", hint:"la zone de chalandise"},
+  {theme:'commerce', level:'cap', text:"Service pour commander en ligne et récupérer en magasin", hint:"le click and collect"},
+  {theme:'commerce', level:'cap', text:"Autre entreprise qui vend les mêmes produits que nous", hint:"la concurrence"},
+  {theme:'commerce', level:'pro', text:"Emplacement en bout de rayon, très visible pour le client", hint:"la tête de gondole"},
+  {theme:'commerce', level:'cap', text:"Action de compter tous les produits en stock", hint:"l'inventaire"},
+  {theme:'commerce', level:'cap', text:"Entreprise qui achète en grande quantité pour revendre à d'autres commerçants", hint:"le grossiste"},
+  {theme:'commerce', level:'cap', text:"Petit magasin proche des habitants", hint:"le commerce de proximité"},
+  {theme:'commerce', level:'cap', text:"Mode de livraison où le client récupère sa commande en voiture", hint:"le drive"},
+  {theme:'commerce', level:'pro', text:"Site internet qui regroupe plusieurs vendeurs différents", hint:"la marketplace"},
+  {theme:'commerce', level:'pro', text:"Ensemble des éléments sensoriels d'un magasin (musique, lumière, odeur, température) qui influencent le client", hint:"les facteurs d'ambiance"},
+  {theme:'commerce', level:'cap', text:"Document qui accompagne une commande passée à un fournisseur", hint:"le bon de commande"},
+  {theme:'commerce', level:'pro', text:"Technique d'agencement des produits en rayon pour donner envie d'acheter", hint:"le marchandisage (merchandising)"},
+  {theme:'commerce', level:'cap', text:"Contrôle de la marchandise à son arrivée en magasin (quantité, qualité)", hint:"le contrôle de réception"},
+  {theme:'commerce', level:'pro', text:"Ensemble des panneaux et informations qui guident le client dans le magasin", hint:"la signalétique"},
+  {theme:'commerce', level:'cap', text:"Rangement des produits sur les rayons selon les règles de l'enseigne", hint:"la mise en rayon"},
+  {theme:'commerce', level:'pro', text:"Stratégie qui permet au client de passer d'un canal de vente à un autre sans rupture (magasin, internet, mobile)", hint:"la stratégie omnicanale"},
+  {theme:'commerce', level:'pro', text:"Perte de marchandise due au vol, à la casse ou à une erreur, difficile à expliquer précisément", hint:"la démarque inconnue"},
+  {theme:'commerce', level:'cap', text:"Date après laquelle un produit ne doit plus être vendu", hint:"la date limite de consommation (DLC)"},
+  {theme:'commerce', level:'pro', text:"Ensemble des opérations qui font venir la marchandise du fournisseur jusqu'au magasin", hint:"la logistique (l'approvisionnement)"},
+  {theme:'commerce', level:'cap', text:"Local où sont stockées les marchandises avant leur mise en rayon", hint:"la réserve"},
+  {theme:'commerce', level:'pro', text:"Action commerciale limitée dans le temps pour dynamiser les ventes (soldes, ventes flash...)", hint:"l'animation commerciale"},
+  {theme:'commerce', level:'cap', text:"Prix affiché sur le produit ou sur le rayon", hint:"l'étiquette de prix"},
+  {theme:'commerce', level:'pro', text:"Étude qui permet de connaître les habitudes et attentes des clients d'une zone", hint:"l'étude de marché"},
+  {theme:'commerce', level:'cap', text:"Support qui présente les produits et leurs prix aux clients (papier ou en ligne)", hint:"le catalogue"},
+
+  // ---- ÉCO-GESTION ----
+  {theme:'gestion', level:'pro', text:"Somme que l'entreprise doit reverser à l'État sur ses ventes", hint:"la TVA"},
+  {theme:'gestion', level:'pro', text:"Document envoyé au client avant qu'il n'accepte l'achat", hint:"le devis"},
+  {theme:'gestion', level:'cap', text:"Ce qu'il reste à l'entreprise après avoir payé toutes ses charges", hint:"le bénéfice"},
+  {theme:'gestion', level:'cap', text:"Somme versée chaque mois à un salarié pour son travail", hint:"le salaire"},
+  {theme:'gestion', level:'pro', text:"Dépenses que l'entreprise doit payer pour fonctionner", hint:"les charges"},
+  {theme:'gestion', level:'pro', text:"Somme mise de côté pour financer un projet de l'entreprise", hint:"l'investissement"},
+  {theme:'gestion', level:'cap', text:"Contrat signé entre un salarié et son employeur", hint:"le contrat de travail"},
+  {theme:'gestion', level:'pro', text:"Statut d'une personne qui crée seule sa petite entreprise", hint:"l'auto-entrepreneur"},
+  {theme:'gestion', level:'pro', text:"Somme prélevée sur le salaire pour financer la sécurité sociale", hint:"les cotisations sociales"},
+  {theme:'gestion', level:'cap', text:"Établissement où l'entreprise dépose et retire son argent", hint:"la banque"},
+  {theme:'gestion', level:'cap', text:"Moyen de paiement qui transfère de l'argent d'un compte à un autre", hint:"le virement"},
+  {theme:'gestion', level:'cap', text:"Document qui prouve qu'une somme est due et doit être payée", hint:"la facture"},
+  {theme:'gestion', level:'cap', text:"Somme dont dispose une entreprise pour ses dépenses sur une période", hint:"le budget"},
+  {theme:'gestion', level:'pro', text:"Personne qui possède des parts dans une société", hint:"l'associé / l'actionnaire"},
+  {theme:'gestion', level:'pro', text:"Registre qui enregistre toutes les opérations financières de l'entreprise", hint:"la comptabilité"},
+  {theme:'gestion', level:'cap', text:"Somme d'argent que l'on gagne chaque mois (salaire, aides...)", hint:"le revenu"},
+  {theme:'gestion', level:'cap', text:"Argent que l'on doit à quelqu'un", hint:"la dette"},
+  {theme:'gestion', level:'pro', text:"Différence entre ce qu'une entreprise gagne et ce qu'elle dépense sur une année", hint:"le résultat (net)"},
+  {theme:'gestion', level:'cap', text:"Document qui résume les dépenses et les recettes prévues sur une période", hint:"le budget prévisionnel"},
+  {theme:'gestion', level:'pro', text:"Forme juridique d'une entreprise créée par une seule personne, avec responsabilité limitée", hint:"l'EURL"},
+  {theme:'gestion', level:'pro', text:"Forme juridique d'une société créée par plusieurs associés, avec responsabilité limitée", hint:"la SARL"},
+  {theme:'gestion', level:'cap', text:"Somme d'argent disponible immédiatement sur le compte de l'entreprise", hint:"la trésorerie"},
+  {theme:'gestion', level:'pro', text:"Document annuel qui présente ce que possède et ce que doit une entreprise", hint:"le bilan"},
+  {theme:'gestion', level:'cap', text:"Réduction accordée sur une facture pour compenser un défaut ou un retard", hint:"la ristourne"},
+  {theme:'gestion', level:'pro', text:"Capital apporté par les associés lors de la création de l'entreprise", hint:"le capital social"},
+  {theme:'gestion', level:'cap', text:"Prélèvement obligatoire payé à l'État sur le revenu", hint:"l'impôt"},
+  {theme:'gestion', level:'pro', text:"Ensemble des règles qui protègent le consommateur lors d'un achat", hint:"le droit de la consommation"},
+  {theme:'gestion', level:'cap', text:"Personne qui travaille pour une entreprise contre un salaire", hint:"le salarié"},
+  {theme:'gestion', level:'pro', text:"Différence entre le chiffre d'affaires et le coût d'achat des marchandises vendues", hint:"la marge commerciale"},
+  {theme:'gestion', level:'cap', text:"Compte utilisé pour mettre de l'argent de côté", hint:"l'épargne"},
+];
+
+/* =========================================================
+   SON — Web Audio API (aucun fichier externe nécessaire)
+========================================================= */
+let audioCtx = null;
+let muted = false;
+function ac(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function tone(freq, dur, type, gainVal, delay){
+  if(muted) return;
+  const ctx = ac();
+  const t0 = ctx.currentTime + (delay||0);
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type||'sine';
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(gainVal||0.2, t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0+dur+0.05);
+}
+function playTick(){ tone(880,0.09,'square',0.15); }
+function playBeep(){ tone(520,0.18,'square',0.2); }
+function playGo(){ tone(300,0.12,'sawtooth',0.25); tone(600,0.25,'sawtooth',0.2,0.08); tone(900,0.35,'sawtooth',0.2,0.16); }
+function playSuccess(){ [523,659,784,1046].forEach((f,i)=>tone(f,0.28,'triangle',0.22,i*0.09)); }
+function playFail(){ tone(220,0.4,'sawtooth',0.25); tone(160,0.5,'sawtooth',0.22,0.15); }
+function playClick(){ tone(700,0.06,'square',0.12); }
+
+/* =========================================================
+   ÉTAT DU JEU
+========================================================= */
+let pairs = [];       // {id,n1,n2,banked,streak}
+let pairIdSeq = 1;
+let deck = {};         // theme -> shuffled array remaining
+let selectedThemes = THEMES.map(t=>t.id);
+let selectedLevels = LEVELS.map(l=>l.id);
+let activePair = null;
+let currentCard = null;
+let timerInt = null;
+let timeLeft = 15;
+let gameClockInt = null;
+let gameEndTimestamp = null; // null = durée libre
+
+/* =========================================================
+   SETUP SCREEN
+========================================================= */
+const themeListEl = document.getElementById('themeList');
+THEMES.forEach(t=>{
+  const div = document.createElement('label');
+  div.className = 'theme-opt checked';
+  div.innerHTML = '<input type="checkbox" checked data-theme="'+t.id+'"><span class="dot" style="background:'+t.color+'"></span><span>'+t.label+'</span>';
+  themeListEl.appendChild(div);
+  div.querySelector('input').addEventListener('change', e=>{
+    div.classList.toggle('checked', e.target.checked);
+    selectedThemes = Array.from(themeListEl.querySelectorAll('input:checked')).map(i=>i.dataset.theme);
+  });
+});
+
+const levelListEl = document.getElementById('levelList');
+LEVELS.forEach(l=>{
+  const div = document.createElement('label');
+  div.className = 'theme-opt checked';
+  div.innerHTML = '<input type="checkbox" checked data-level="'+l.id+'"><span class="dot" style="background:'+l.color+'"></span><span>'+l.label+'</span>';
+  levelListEl.appendChild(div);
+  div.querySelector('input').addEventListener('change', e=>{
+    div.classList.toggle('checked', e.target.checked);
+    selectedLevels = Array.from(levelListEl.querySelectorAll('input:checked')).map(i=>i.dataset.level);
+  });
+});
+
+function renderPairList(){
+  const el = document.getElementById('pairList');
+  if(pairs.length===0){ el.innerHTML = "<p class=\"empty-note\">Aucun binôme ajouté pour l'instant.</p>"; return; }
+  el.innerHTML = '';
+  pairs.forEach(p=>{
+    const row = document.createElement('div');
+    row.className = 'pair-row';
+    row.innerHTML = '<span class="names">'+p.n1+' &amp; '+p.n2+'</span><button class="del" data-id="'+p.id+'">×</button>';
+    el.appendChild(row);
+  });
+  el.querySelectorAll('.del').forEach(b=>b.addEventListener('click', ()=>{
+    pairs = pairs.filter(p=>p.id != b.dataset.id);
+    renderPairList();
+  }));
+}
+
+document.getElementById('addPairBtn').addEventListener('click', addPair);
+[document.getElementById('p1'), document.getElementById('p2')].forEach(inp=>{
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') addPair(); });
+});
+function addPair(){
+  const p1 = document.getElementById('p1').value.trim();
+  const p2 = document.getElementById('p2').value.trim();
+  if(!p1 || !p2) return;
+  pairs.push({id:pairIdSeq++, n1:p1, n2:p2, banked:0, streak:0});
+  document.getElementById('p1').value='';
+  document.getElementById('p2').value='';
+  document.getElementById('p1').focus();
+  renderPairList();
+}
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('startBtn2').addEventListener('click', ()=>{
+  pairs.forEach(p=>{p.banked=0;p.streak=0;});
+  clearInterval(gameClockInt);
+  document.getElementById('gameClock').style.display = 'none';
+  showScreen('setup');
+});
+
+function startGame(){
+  const msg = document.getElementById('setupMsg');
+  if(pairs.length===0){ msg.textContent = "Ajoutez au moins un binôme avant de commencer."; return; }
+  if(selectedThemes.length===0){ msg.textContent = "Cochez au moins un thème."; return; }
+  if(selectedLevels.length===0){ msg.textContent = "Cochez au moins un niveau (CAP et/ou Bac Pro)."; return; }
+  msg.textContent = '';
+  buildDecks();
+  activePair = null;
+  showScreen('game');
+  renderScoreboard();
+  setStage('idle');
+  startGameClock();
+}
+
+function startGameClock(){
+  clearInterval(gameClockInt);
+  const mins = parseFloat(document.getElementById('durationInput').value) || 0;
+  const clockEl = document.getElementById('gameClock');
+  if(mins <= 0){
+    gameEndTimestamp = null;
+    clockEl.style.display = 'none';
+    return;
+  }
+  gameEndTimestamp = Date.now() + mins*60000;
+  clockEl.style.display = 'inline-block';
+  updateGameClock();
+  gameClockInt = setInterval(updateGameClock, 1000);
+}
+
+function updateGameClock(){
+  const clockEl = document.getElementById('gameClock');
+  const remainingMs = gameEndTimestamp - Date.now();
+  if(remainingMs <= 0){
+    clockEl.textContent = '⏱ 00:00';
+    clearInterval(gameClockInt);
+    finishGame();
+    return;
+  }
+  const totalSec = Math.round(remainingMs/1000);
+  const mm = Math.floor(totalSec/60).toString().padStart(2,'0');
+  const ss = (totalSec%60).toString().padStart(2,'0');
+  clockEl.textContent = '⏱ ' + mm + ':' + ss;
+  if(totalSec <= 10 && !muted){ /* petit signal discret dans les 10 dernières secondes */ }
+}
+
+function buildDecks(){
+  deck = {};
+  THEMES.forEach(t=>{
+    deck[t.id] = shuffle(CARDS.filter(c=>c.theme===t.id && selectedLevels.includes(c.level)));
+  });
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function drawCard(){
+  const pool = selectedThemes.filter(t=>deck[t] && deck[t].length>0);
+  if(pool.length===0){
+    // reshuffle
+    selectedThemes.forEach(t=>{ deck[t] = shuffle(CARDS.filter(c=>c.theme===t && selectedLevels.includes(c.level))); });
+  }
+  const finalPool = selectedThemes.filter(t=>deck[t] && deck[t].length>0);
+  const theme = finalPool[Math.floor(Math.random()*finalPool.length)];
+  return deck[theme].pop();
+}
+
+/* =========================================================
+   NAVIGATION ÉCRANS
+========================================================= */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* =========================================================
+   SCOREBOARD
+========================================================= */
+function themeInfo(id){ return THEMES.find(t=>t.id===id); }
+
+function renderScoreboard(){
+  const el = document.getElementById('scoreboard');
+  el.innerHTML = '';
+  pairs.forEach(p=>{
+    const chip = document.createElement('div');
+    chip.className = 'team-chip' + (activePair===null ? ' pickable':'') + (activePair===p.id ? ' active':'');
+    chip.innerHTML = '<span>'+p.n1+' &amp; '+p.n2+'</span><span class="tscore">'+p.banked+'</span>' +
+      (p.streak>0 ? '<span class="streak">🔥+'+p.streak+'</span>' : '');
+    if(activePair===null){
+      chip.addEventListener('click', ()=>callTeam(p.id));
+    }
+    el.appendChild(chip);
+  });
+}
+
+/* =========================================================
+   STAGE STATE MACHINE
+========================================================= */
+const stageEls = {
+  idle: document.getElementById('stateIdle'),
+  called: document.getElementById('stateCalled'),
+  prep: document.getElementById('statePrep'),
+  countdown: document.getElementById('stateCountdown'),
+  judge: document.getElementById('stateJudge'),
+  decision: document.getElementById('stateDecision'),
+  lossMsg: document.getElementById('stateLossMsg'),
+};
+function setStage(name){
+  Object.values(stageEls).forEach(e=>e.style.display='none');
+  stageEls[name].style.display = (name==='idle'||name==='called'||name==='countdown') ? 'block' : 'block';
+}
+
+function callTeam(id){
+  playClick();
+  activePair = id;
+  const p = pairs.find(x=>x.id===id);
+  document.getElementById('callTeamName').textContent = p.n1 + ' & ' + p.n2;
+  renderScoreboard();
+  setStage('called');
+}
+
+document.getElementById('drawBtn').addEventListener('click', ()=>{
+  currentCard = drawCard();
+  const info = themeInfo(currentCard.theme);
+  document.getElementById('prepThemeTag').textContent = info.label + ' · ' + (currentCard.level==='cap' ? 'CAP' : 'Bac Pro');
+  document.getElementById('prepThemeTag').style.background = info.color;
+  document.getElementById('prepThemeTag').style.color = '#0F1129';
+  document.getElementById('cardText').textContent = currentCard.text;
+  setStage('prep');
+  startPrepTimer();
+});
+
+function startPrepTimer(){
+  timeLeft = 15;
+  document.getElementById('timerFill').style.width = '100%';
+  document.getElementById('timerNum').textContent = timeLeft + ' s pour réfléchir chacun de son côté — pas le droit de parler !';
+  clearInterval(timerInt);
+  timerInt = setInterval(()=>{
+    timeLeft--;
+    document.getElementById('timerFill').style.width = (timeLeft/15*100)+'%';
+    if(timeLeft<=5 && timeLeft>0){ playTick(); }
+    if(timeLeft>0){
+      document.getElementById('timerNum').textContent = timeLeft + ' s restantes...';
+    }
+    if(timeLeft<=0){
+      clearInterval(timerInt);
+      runCountdown();
+    }
+  },1000);
+}
+
+function runCountdown(){
+  setStage('countdown');
+  const numEl = document.getElementById('countdownNum');
+  const wordEl = document.getElementById('countdownWord');
+  numEl.style.display='block';
+  wordEl.style.display='none';
+  let n = 3;
+  numEl.textContent = n;
+  playBeep();
+  const seq = setInterval(()=>{
+    n--;
+    if(n>0){
+      numEl.textContent = n;
+      playBeep();
+    } else {
+      clearInterval(seq);
+      numEl.style.display='none';
+      wordEl.style.display='block';
+      playGo();
+      setTimeout(showJudge, 1100);
+    }
+  },800);
+}
+
+function showJudge(){
+  const info = themeInfo(currentCard.theme);
+  document.getElementById('judgeThemeTag').textContent = info.label + ' · ' + (currentCard.level==='cap' ? 'CAP' : 'Bac Pro');
+  document.getElementById('judgeThemeTag').style.background = info.color;
+  document.getElementById('judgeThemeTag').style.color = '#0F1129';
+  document.getElementById('judgeCardText').textContent = currentCard.text;
+  document.getElementById('hintBox').style.display='none';
+  document.getElementById('hintBox').textContent='';
+  document.getElementById('hintToggle').textContent = "🔎 Afficher l'indice (réponse attendue)";
+  setStage('judge');
+}
+document.getElementById('hintToggle').addEventListener('click', ()=>{
+  const box = document.getElementById('hintBox');
+  const show = box.style.display==='none';
+  box.style.display = show ? 'block':'none';
+  box.textContent = show ? ('Réponse attendue : ' + currentCard.hint) : '';
+});
+
+document.getElementById('winBtn').addEventListener('click', ()=>{
+  playSuccess();
+  burstConfetti();
+  document.getElementById('stage').classList.add('flash-win');
+  setTimeout(()=>document.getElementById('stage').classList.remove('flash-win'),600);
+  const p = pairs.find(x=>x.id===activePair);
+  p.streak += 1;
+  renderScoreboard();
+  document.getElementById('decisionTitle').textContent = '🎉 Même réponse !';
+  document.getElementById('decisionSub').textContent = 'Ce binôme a maintenant ' + p.streak + ' point(s) en jeu ce tour.';
+  document.getElementById('bankBtn').textContent = '🏦 Encaisser ' + p.streak + ' point(s)';
+  setStage('decision');
+});
+
+document.getElementById('loseBtn').addEventListener('click', ()=>{
+  playFail();
+  document.getElementById('stage').classList.add('flash-lose');
+  setTimeout(()=>document.getElementById('stage').classList.remove('flash-lose'),600);
+  const p = pairs.find(x=>x.id===activePair);
+  const lost = p.streak;
+  p.streak = 0;
+  renderScoreboard();
+  document.getElementById('lossText').textContent = lost>0
+    ? 'Ils repartent bredouilles et perdent les ' + lost + ' point(s) gagné(s) pendant cette série.'
+    : "Pas de point ce tour, mais rien n'était en jeu !";
+  setStage('lossMsg');
+});
+
+document.getElementById('continueAfterLoss').addEventListener('click', endTurn);
+
+document.getElementById('bankBtn').addEventListener('click', ()=>{
+  const p = pairs.find(x=>x.id===activePair);
+  p.banked += p.streak;
+  p.streak = 0;
+  renderScoreboard();
+  endTurn();
+});
+document.getElementById('retryBtn').addEventListener('click', ()=>{
+  currentCard = drawCard();
+  const info = themeInfo(currentCard.theme);
+  document.getElementById('prepThemeTag').textContent = info.label + ' · ' + (currentCard.level==='cap' ? 'CAP' : 'Bac Pro');
+  document.getElementById('prepThemeTag').style.background = info.color;
+  document.getElementById('prepThemeTag').style.color = '#0F1129';
+  document.getElementById('cardText').textContent = currentCard.text;
+  setStage('prep');
+  startPrepTimer();
+});
+
+function endTurn(){
+  activePair = null;
+  currentCard = null;
+  renderScoreboard();
+  setStage('idle');
+}
+
+/* =========================================================
+   FIN DE PARTIE
+========================================================= */
+document.getElementById('endGameBtn').addEventListener('click', finishGame);
+
+function finishGame(){
+  clearInterval(timerInt);
+  clearInterval(gameClockInt);
+  const sorted = pairs.slice().sort((a,b)=>b.banked-a.banked);
+  const el = document.getElementById('rankList');
+  el.innerHTML = '';
+  sorted.forEach((p,i)=>{
+    const row = document.createElement('div');
+    row.className = 'rank-row' + (i===0 && p.banked>0 ? ' first':'');
+    row.innerHTML = '<span><span class="pos">'+(i+1)+'.</span>'+p.n1+' &amp; '+p.n2+'</span><span class="pts">'+p.banked+' pt</span>';
+    el.appendChild(row);
+  });
+  if(sorted.length && sorted[0].banked>0) burstConfetti(60);
+  showScreen('results');
+}
+document.getElementById('resumeBtn').addEventListener('click', ()=>{
+  showScreen('game');
+  // si une durée était fixée et le temps n'est pas écoulé, on relance l'affichage du chrono
+  if(gameEndTimestamp && gameEndTimestamp > Date.now()){
+    clearInterval(gameClockInt);
+    updateGameClock();
+    gameClockInt = setInterval(updateGameClock, 1000);
+  }
+});
+
+/* =========================================================
+   DIVERS : son / plein écran / règles / confettis
+========================================================= */
+document.getElementById('muteBtn').addEventListener('click', function(){
+  muted = !muted;
+  this.textContent = muted ? '🔇' : '🔊';
+});
+document.getElementById('fsBtn').addEventListener('click', ()=>{
+  if(!document.fullscreenElement){ document.documentElement.requestFullscreen().catch(()=>{}); }
+  else{ document.exitFullscreen(); }
+});
+document.getElementById('rulesBtn').addEventListener('click', ()=>{ document.getElementById('rulesModal').style.display='flex'; });
+document.getElementById('closeRules').addEventListener('click', ()=>{ document.getElementById('rulesModal').style.display='none'; });
+
+function burstConfetti(count){
+  count = count || 30;
+  const colors = ['#FFC93C','#FF3D71','#2EE6A6','#7DD8FF'];
+  for(let i=0;i<count;i++){
+    const c = document.createElement('div');
+    c.className='confetti';
+    c.style.left = Math.random()*100+'vw';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration = (2+Math.random()*1.5)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 3600);
+  }
+}
+
+renderPairList();
+</script>
+</body>
+</html>
